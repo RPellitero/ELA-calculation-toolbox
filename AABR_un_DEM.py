@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, division
 import locale
 import os
 import operator
@@ -13,9 +13,7 @@ arcpy.CheckOutExtension("3D")# Check the extension used
 dem=arcpy.GetParameterAsText(0)
 files=arcpy.GetParameterAsText(1)
 interval= int(arcpy.GetParameterAsText(2))
-sr= arcpy.GetParameterAsText(3)
-br=locale.atof(sr)
-
+br= arcpy.GetParameterAsText(3)
 
 #Maximum and minimum value of DEM
 upper=arcpy.GetRasterProperties_management(dem,"MAXIMUM")
@@ -29,6 +27,41 @@ try:
 except:
     maxalt= int(maximum.split(',')[0])
 maxalt=maxalt+interval
+
+try:
+    minalt= int(minimum.split('.')[0])
+except:
+    minalt= int(minimum.split(',')[0])
+minalt=minalt-interval
+
+#get the proper br without the use of locale.atof
+if '.' in br:
+    brlist=br.split('.')
+    brint= int(brlist[0])
+    brdec= brlist[1][:2]
+    if len(brdec)==2:
+        brdec=int(brdec)
+        br=brint+(brdec/100)
+    else:
+        brdec=int(brdec)
+        br=brint+(brdec/10)
+elif "," in br:
+    brlist=br.split(',')
+    brint= int(brlist[0])
+    brdec= brlist[1][:2]
+    if len(brdec)==2:
+        brdec=int(brdec)
+        br=brint+(brdec/100)
+    else:
+        brdec=int(brdec)
+        br=brint+(brdec/10)
+else:
+    try:
+        br=int(br)
+    except:
+        arcpy.AddError("The script could not read your balance ratio because it is not a number")
+        quit()
+print (br)
 
 try:
     minalt= int(minimum.split('.')[0])

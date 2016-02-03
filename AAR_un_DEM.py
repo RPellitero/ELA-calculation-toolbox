@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, division
 import locale
 import os
 import operator
@@ -10,24 +10,17 @@ arcpy.env.overwriteOutput = True
 # Check the extensions used
 arcpy.CheckOutExtension("3D")
 
-
-
 # Define the input parameters
 dem=arcpy.GetParameterAsText(0)
 files=arcpy.GetParameterAsText(1)
 interval= int(arcpy.GetParameterAsText(2))
-sr=arcpy.GetParameterAsText(3)
-ratio=locale.atof(sr)
-
-
+ratio= arcpy.GetParameterAsText(3)
 
 #Maximum and minimum value of DEM
 upper=arcpy.GetRasterProperties_management(dem,"MAXIMUM")
 maximum=upper.getOutput(0)
 lower=arcpy.GetRasterProperties_management(dem,"MINIMUM")
 minimum=lower.getOutput(0)
-
-
 
 #both treat comma and point decimals
 try:
@@ -42,8 +35,35 @@ except:
     minalt= int(minimum.split(',')[0])
 minalt=minalt-interval
 
+#get the proper ratio without the use of locale.atof
 
-
+if '.' in ratio:
+    ratiolist=ratio.split('.')
+    ratioint= int(ratiolist[0])
+    ratiodec= ratiolist[1][:2]
+    if len(ratiodec)==2:
+        ratiodec=int(ratiodec)
+        ratio=ratioint+(ratiodec/100)
+    else:
+        ratiodec=int(ratiodec)
+        ratio=ratioint+(ratiodec/10)
+elif "," in ratio:
+    ratiolist=ratio.split(',')
+    ratioint= int(ratiolist[0])
+    ratiodec= ratiolist[1][:2]
+    if len(ratiodec)==2:
+        ratiodec=int(ratiodec)
+        ratio=ratioint+(ratiodec/100)
+    else:
+        ratiodec=int(ratiodec)
+        ratio=ratioint+(ratiodec/10)
+else:
+    try:
+        ratio=int(ratio)
+    except:
+        arcpy.AddError("The script could not read your ratio because it is not a number")
+        quit()
+print (ratio)
 desc=arcpy.Describe(dem) # Get information from the DEM
 nombre=os.path.join(files,desc.baseName+".txt") # Get the name from the DEM
 
